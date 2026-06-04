@@ -20,4 +20,4 @@
 
 <br/>
 
-> Docs for CtxIQ, a context and memory orchestration toolkit for building smarter AI assistants with TypeScript.
+> Docs for CtxIQ, a context and memory orchestration toolkit for building smarter AI assistants with TypeScript..
