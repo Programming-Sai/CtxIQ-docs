@@ -1,0 +1,71 @@
+---
+title: Mastering AI Context
+description: CtxIQ is a sophisticated orchestration layer for long-term memory, session state, and token optimization for large language models.
+badge: v1.2.0-beta
+---
+
+<div className="grid gap-6 md:grid-cols-2">
+  <div className="rounded-[20px] border border-white/10 bg-[#0b0c11] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+    <h2 className="text-xl font-semibold text-[#cfd6ff]">
+      Deterministic Control
+    </h2>
+    <p className="mt-3 max-w-md text-sm leading-7 text-white/50">
+      Pin system messages and dynamically trim history with mathematical precision. Never lose track of critical instructions during long-running sessions.
+    </p>
+  </div>
+
+  <div className="rounded-[20px] border border-white/10 bg-[#0b0c11] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+    <h2 className="text-xl font-semibold text-[#cfd6ff]">
+      Universal Adapters
+    </h2>
+    <p className="mt-3 max-w-md text-sm leading-7 text-white/50">
+      A unified context format for OpenAI, Anthropic, and local models. Switch providers with a single line of code without refactoring memory logic.
+    </p>
+  </div>
+</div>
+
+## Core Philosophy
+
+<div className="space-y-6">
+  <div className="flex gap-4">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#0f1118] text-xs font-semibold text-[#b8c4ff]">
+      01
+    </div>
+    <div>
+      <h3 className="text-lg font-semibold text-white">State Immutability</h3>
+      <p className="mt-1 max-w-2xl text-sm leading-7 text-white/50">
+        Historical snapshots are immutable by default, preventing state corruption in concurrent agent environments.
+      </p>
+    </div>
+  </div>
+
+  <div className="flex gap-4">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-[#0f1118] text-xs font-semibold text-[#b8c4ff]">
+      02
+    </div>
+    <div>
+      <h3 className="text-lg font-semibold text-white">Resource Efficiency</h3>
+      <p className="mt-1 max-w-2xl text-sm leading-7 text-white/50">
+        Built-in token budgeting calculates model-specific overhead in real time, preventing context-window overflow errors before they happen.
+      </p>
+    </div>
+  </div>
+</div>
+
+## Architecture Visualization
+
+<div className="rounded-[20px] border border-white/10 bg-[#0b0c11] p-6">
+  <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/35">
+    Architecture visualization
+  </div>
+  <div className="mt-6 h-2 rounded-full bg-white/8">
+    <div className="h-2 w-[68%] rounded-full bg-[#b8c4ff]" />
+  </div>
+  <div className="mt-5 grid grid-cols-3 text-[10px] uppercase tracking-[0.2em] text-white/28">
+    <div>System prompt (4KB)</div>
+    <div className="text-center">Active history (12KB)</div>
+    <div className="text-right">Buffer (8KB)</div>
+  </div>
+</div>
+
+<PageNav next={{ label: "Quick Start", href: "/docs/quick-start" }} />

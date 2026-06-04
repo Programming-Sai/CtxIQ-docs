@@ -1,0 +1,107 @@
+---
+title: Quick Start
+description: Get CtxIQ running in under five minutes — from installation to your first managed AI session.
+badge: ⚡ 5 min setup
+---
+
+# Quick Start
+
+Get CtxIQ running in under five minutes. This guide walks you from installation to your first
+managed AI session.
+
+---
+
+## Installation
+
+<Tabs>
+  <Tab label="npm">```bash npm install @ctxiq/sdk ```</Tab>
+  <Tab label="pnpm">```bash pnpm add @ctxiq/sdk ```</Tab>
+  <Tab label="yarn">```bash yarn add @ctxiq/sdk ```</Tab>
+</Tabs>
+
+<Callout type="success">
+  **Requirements:** Node.js 18+, TypeScript 4.9+ (optional but recommended).
+  Works with CommonJS and ESM.
+</Callout>
+
+---
+
+## Basic Setup
+
+Add your API key to your environment. CtxIQ reads from `CTXIQ_KEY` by default.
+
+```bash title=".env"
+CTXIQ_KEY=ctxiq_live_xxxxxxxxxxxxxxxx
+```
+
+---
+
+## First Session
+
+<Steps>
+  <Step title="Import and initialize">
+    Create an orchestrator instance with your chosen adapter and token budget.
+
+    ```ts
+    import { CtxIQ } from '@ctxiq/sdk';
+
+    const orchestrator = new CtxIQ({
+      apiKey: process.env.CTXIQ_KEY,
+      adapter: 'openai-v4-turbo',
+      budget: 4096,
+    });
+    ```
+
+  </Step>
+
+  <Step title="Create a session">
+    Call `createSession()` with a unique user identifier. CtxIQ will persist state across calls.
+
+    ```ts
+    const session = await orchestrator.createSession({
+      id: 'user-unique-id',
+      persistence: 'long-term',
+    });
+    ```
+
+  </Step>
+
+  <Step title="Send messages">
+    Use `session.ask()` to send messages. Context pruning and session management happen
+    automatically.
+
+    ```ts
+    const response = await session.ask("What is the capital of France?");
+    console.log(response.content);
+    ```
+
+  </Step>
+
+  <Step title="Inspect metrics">
+    Access `session.metrics` for real-time token usage, pruning events, and latency data.
+
+    ```ts
+    const { budget, pruningEvents, latencyMs } = session.metrics;
+    console.log(`Used ${budget.used}/${budget.limit} tokens`);
+    ```
+
+  </Step>
+</Steps>
+
+---
+
+## Next Steps
+
+Now that you have a working session, explore the core concepts:
+
+- [Session Management](/docs/session-management) — persistence modes, TTL, lifecycle
+- [Token Budgeting](/docs/token-budgeting) — hard/soft limits, budget events
+- [Semantic Pruning](/docs/semantic-pruning) — tuning similarity thresholds
+- [Adapter Integration](/docs/adapter-integration) — switching providers, custom adapters
+
+---
+
+<PageNav
+  prev={{ label: "Introduction", href: "/docs/introduction" }}
+  next={{ label: "Session Management", href: "/docs/session-management" }}
+/>

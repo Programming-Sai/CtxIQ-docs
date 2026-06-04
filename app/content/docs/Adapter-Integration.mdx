@@ -1,0 +1,118 @@
+---
+title: Adapter Integration
+description: Standardized connectors for every major LLM provider. Switch between OpenAI, Anthropic, and Llama without touching your context logic.
+badge: Core Concept
+---
+
+# Adapter Integration
+
+CtxIQ provides standardized connectors for every major LLM provider. Switch between OpenAI,
+Anthropic, and Llama without touching your session or context logic.
+
+---
+
+## Available adapters
+
+| Adapter ID           | Provider    | Context | Notes                                                          |
+| -------------------- | ----------- | ------- | -------------------------------------------------------------- |
+| `openai-v4-turbo`    | OpenAI      | 128k    | Default. GPT-4 Turbo, recommended for most use cases.          |
+| `openai-v4o`         | OpenAI      | 128k    | GPT-4o multimodal — supports vision inputs.                    |
+| `anthropic-claude-3` | Anthropic   | 200k    | Claude 3 family (Haiku, Sonnet, Opus). Largest context window. |
+| `llama-3-70b`        | Meta / Groq | 8k      | Ultra-low latency via Groq inference.                          |
+| `llama-3-8b`         | Meta / Groq | 8k      | Fastest, lowest cost. Good for high-volume classification.     |
+| `custom`             | Any         | —       | Bring your own via `IAdapter` interface.                       |
+
+---
+
+## Usage
+
+```ts title="adapters.ts"
+// Set adapter at initialization
+const orchestrator = new CtxIQ({
+  apiKey: process.env.CTXIQ_KEY,
+  adapter: "anthropic-claude-3",
+});
+
+// Hot-swap adapter on an existing orchestrator
+// (active sessions continue unaffected)
+await orchestrator.setAdapter("llama-3-70b");
+
+// Context logic is completely unchanged
+const response = await session.ask("Same question, different model.");
+```
+
+<Callout type="tip">
+  Hot-swapping adapters doesn't affect active sessions. In-flight requests
+  complete on the original adapter. New `ask()` calls after `setAdapter()` use
+  the new provider.
+</Callout>
+
+---
+
+## Per-session adapter override
+
+You can assign a different adapter to a specific session without affecting others:
+
+```ts title="per-session.ts"
+const cheapSession = await orchestrator.createSession({
+  id: "background-task",
+  adapter: "llama-3-8b", // fast + cheap for low-stakes tasks
+});
+
+const qualitySession = await orchestrator.createSession({
+  id: "user-facing",
+  adapter: "anthropic-claude-3", // best quality for user interactions
+});
+```
+
+---
+
+## Custom adapters
+
+Implement the `IAdapter` interface to connect any inference endpoint — self-hosted models,
+fine-tunes, or edge deployments.
+
+```ts title="custom-adapter.ts"
+import { IAdapter, Message, CompletionResult } from "@ctxiq/sdk";
+
+class MyAdapter implements IAdapter {
+  readonly id = "my-custom-model";
+  readonly tokenizer = "cl100k_base"; // used for accurate token counting
+
+  async complete(messages: Message[]): Promise<CompletionResult> {
+    const res = await fetch("https://my-model.example.com/v1/chat", {
+      method: "POST",
+      body: JSON.stringify({ messages }),
+    });
+    const data = await res.json();
+    return {
+      content: data.choices[0].message.content,
+      tokens: data.usage.total_tokens,
+    };
+  }
+}
+
+// Register the custom adapter
+const orchestrator = new CtxIQ({
+  adapter: new MyAdapter(),
+});
+```
+
+### IAdapter interface
+
+| Method                  | Required | Description                                                                    |
+| ----------------------- | -------- | ------------------------------------------------------------------------------ |
+| `complete(messages)`    | ✓        | Send messages and return content + token count.                                |
+| `stream(messages, cb)`  | —        | Optional streaming support.                                                    |
+| `embed(text)`           | —        | Optional — used for semantic pruning. Falls back to CtxIQ's embedding service. |
+| `countTokens(messages)` | —        | Optional — override token counting.                                            |
+
+<Callout type="warning">
+  If your custom adapter doesn't implement `embed()`, CtxIQ will use its own
+  hosted embedding service for semantic pruning. This adds a small latency
+  overhead (~5ms) per pruning pass.
+</Callout>
+
+---
+
+<PageNav prev={{ label: "Semantic Pruning", href: "/docs/semantic-pruning" }} />

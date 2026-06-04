@@ -1,0 +1,115 @@
+---
+title: Semantic Pruning
+description: Unlike FIFO truncation, CtxIQ uses vector similarity to keep only the most relevant messages in the active context window.
+badge: Core Concept
+---
+
+# Semantic Pruning
+
+Unlike simple FIFO truncation, CtxIQ uses vector similarity to intelligently remove messages that
+are least relevant to the current conversation thread — preserving conceptual continuity even as
+the context window fills.
+
+---
+
+## FIFO vs semantic
+
+Traditional context management drops the oldest messages when the window fills. This is fast and
+predictable, but it blindly discards early context that may still be highly relevant — user goals,
+constraints, and key instructions stated at the start of a conversation.
+
+CtxIQ's semantic pruner computes embeddings for every message and scores each one against a rolling
+reference window of recent messages. Messages with low cosine similarity to the current thread
+become candidates for removal, regardless of their age.
+
+| Strategy   | Speed    | Context quality        | Best for                  |
+| ---------- | -------- | ---------------------- | ------------------------- |
+| `fifo`     | Fastest  | Poor for long sessions | Simple chat, logs         |
+| `semantic` | Moderate | Excellent              | Assistants, research      |
+| `hybrid`   | Moderate | Good                   | General purpose (default) |
+
+---
+
+## How it scores
+
+Each message is embedded into a 1536-dimensional vector using a lightweight model hosted in
+CtxIQ's inference cluster. Cosine similarity is computed against a rolling window of the
+last N messages (configurable via `lookback`). Messages below the similarity `threshold` become
+pruning candidates.
+
+Candidates are sorted by score ascending and removed until the budget is within range. Pinned
+messages are always skipped.
+
+---
+
+## Tuning
+
+```ts title="pruning.ts"
+const session = await orchestrator.createSession({
+  pruning: {
+    strategy: "semantic",
+    threshold: 0.72, // cosine similarity floor (0–1, higher = more aggressive)
+    lookback: 8, // number of recent messages used as reference
+    pinFirst: 3, // always keep the first N messages (system prompt, user profile, etc.)
+    minKeep: 4, // never prune below this many messages
+  },
+});
+
+// Pin a specific message at send time
+await session.ask(
+  "User profile: senior engineer, working on a TypeScript monorepo.",
+  {
+    pinned: true,
+  },
+);
+```
+
+### Threshold guide
+
+| Threshold   | Effect                                                      |
+| ----------- | ----------------------------------------------------------- |
+| `0.5–0.65`  | Aggressive — only very relevant messages kept               |
+| `0.70–0.75` | Balanced — recommended starting point                       |
+| `0.80–0.90` | Conservative — prunes very little; budget may still run out |
+
+<Callout type="tip">
+  Start at `threshold: 0.72` and adjust based on your domain. Technical
+  conversations with precise vocabulary generally benefit from lower thresholds.
+  Open-ended conversations benefit from higher ones.
+</Callout>
+
+---
+
+## Hybrid mode
+
+`hybrid` combines FIFO and semantic scoring. Very old messages (beyond a configurable `fifoAge`
+turn count) are dropped regardless of similarity, while newer messages are scored semantically.
+This provides a natural time-decay that prevents stale context from accumulating even if
+semantically similar to recent messages.
+
+```ts
+pruning: {
+  strategy: 'hybrid',
+  threshold: 0.70,
+  fifoAge: 40,        // messages older than 40 turns are FIFO-pruned first
+}
+```
+
+---
+
+## Inspecting pruning events
+
+```ts title="events.ts"
+session.on("pruned", (event) => {
+  console.log(`Removed ${event.removed} messages`);
+  console.log(`Scores:`, event.scores); // [{messageId, score}]
+  console.log(`Tokens freed: ${event.tokensFreed}`);
+});
+```
+
+---
+
+<PageNav
+  prev={{ label: "Token Budgeting", href: "/docs/token-budgeting" }}
+  next={{ label: "Adapter Integration", href: "/docs/adapter-integration" }}
+/>

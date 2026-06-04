@@ -1,0 +1,117 @@
+---
+title: Session Management
+description: CtxIQ's Virtual Session Layer persists conversational state across API calls, eliminating manual message history management.
+badge: Core Concept
+---
+
+# Session Management
+
+CtxIQ's Virtual Session Layer persists conversational state across API calls, eliminating the need
+to manually manage message history. Each `Session` object maintains a rolling window of messages,
+tracks token usage, and automatically prunes stale context.
+
+---
+
+## Overview
+
+Sessions can be one of three persistence modes:
+
+| Mode        | Storage               | Latency | Use case                                    |
+| ----------- | --------------------- | ------- | ------------------------------------------- |
+| `ephemeral` | In-memory only        | Fastest | Short-lived interactions, no history needed |
+| `durable`   | Edge cache (Redis)    | &lt;10ms   | Multi-turn apps with session TTL            |
+| `long-term` | Persistent DB + cache | 10–30ms | User assistants, ongoing workflows          |
+
+---
+
+## createSession()
+
+```ts title="session.ts"
+const session = await orchestrator.createSession({
+  id: "user-abc123",
+  persistence: "long-term", // 'ephemeral' | 'durable' | 'long-term'
+  ttl: 86400, // seconds (ignored for long-term)
+  budget: 4096, // override global token budget
+  pruning: "semantic", // 'fifo' | 'semantic' | 'hybrid'
+});
+```
+
+### Config options
+
+| Option        | Type                                      | Default      | Description                                                                            |
+| ------------- | ----------------------------------------- | ------------ | -------------------------------------------------------------------------------------- |
+| `id`          | `string`                                  | —            | **Required.** Unique identifier for the session. Used for retrieval and deduplication. |
+| `persistence` | `'ephemeral' \| 'durable' \| 'long-term'` | `'durable'`  | How session state is stored.                                                           |
+| `ttl`         | `number`                                  | `3600`       | Time-to-live in seconds. Ignored for `long-term` sessions.                             |
+| `budget`      | `number`                                  | global       | Token limit for this session, overriding the global setting.                           |
+| `pruning`     | `'fifo' \| 'semantic' \| 'hybrid'`        | `'semantic'` | Pruning strategy to apply when the budget is approached.                               |
+
+---
+
+## Session lifecycle
+
+```ts title="lifecycle.ts"
+// Resume an existing session by ID
+const session = await orchestrator.resumeSession("user-abc123");
+
+// Check if session exists
+const exists = await orchestrator.sessionExists("user-abc123");
+
+// Explicitly expire a session
+await session.expire();
+
+// Delete session and all stored state
+await session.destroy();
+```
+
+---
+
+## Persistence modes
+
+### Ephemeral
+
+Fastest option — state is held in-memory within the orchestrator process. Zero storage overhead,
+but sessions are lost if the process restarts. Ideal for serverless functions handling a single
+request-response cycle.
+
+### Durable
+
+Session state is written to CtxIQ's distributed edge cache after each message. Sub-10ms retrieval
+via regional nodes. Sessions auto-expire according to `ttl`. This is the default mode and suits
+most production applications.
+
+### Long-term
+
+State is persisted to database-backed storage with full message history. The edge cache is still
+used as a read-through layer for latency. Ideal for user assistants that need memory across
+sessions spanning days or weeks.
+
+<Callout type="tip">
+  For long-term sessions, CtxIQ automatically generates periodic **session
+  summaries** to compress older history. This keeps retrieval fast even after
+  hundreds of turns.
+</Callout>
+
+---
+
+## Accessing session state
+
+```ts title="state.ts"
+// Read the current message window
+const messages = session.messages;
+
+// Inspect full metrics
+const { budget, pruningEvents, sessionAge, messageCount } = session.metrics;
+
+// Listen for state changes
+session.on("message", (msg) => console.log("new:", msg));
+session.on("pruned", (e) => console.log("pruned:", e.removed, "messages"));
+session.on("expired", () => console.log("session expired"));
+```
+
+---
+
+<PageNav
+  prev={{ label: "Quick Start", href: "/docs/quick-start" }}
+  next={{ label: "Token Budgeting", href: "/docs/token-budgeting" }}
+/>

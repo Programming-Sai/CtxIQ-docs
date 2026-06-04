@@ -1,0 +1,106 @@
+---
+title: Token Budgeting
+description: Prevent runaway context costs with smart budgeting. CtxIQ tracks token consumption in real-time and applies configurable limits automatically.
+badge: Core Concept
+---
+
+# Token Budgeting
+
+Prevent runaway context costs with smart budgeting. CtxIQ tracks token consumption in real-time
+and applies configurable limits before your inference bill surprises you.
+
+---
+
+## How it works
+
+Every message sent through a CtxIQ session is counted against the session's token budget. When
+utilization approaches the configured limit, CtxIQ triggers a pruning pass before sending the
+next request — keeping the context window lean without dropping critical information.
+
+Token counting is adapter-aware: CtxIQ uses the same tokenizer as the underlying model, so counts
+are accurate rather than estimated.
+
+---
+
+## Hard vs soft limits
+
+| Limit type | Behaviour                                                            | Default        |
+| ---------- | -------------------------------------------------------------------- | -------------- |
+| Soft limit | Triggers a pruning pass. Conversation continues.                     | 80% of budget  |
+| Hard limit | Throws `BudgetExceededError` if pruning can't recover enough tokens. | 100% of budget |
+
+<Callout type="tip">
+  Set `softLimit: 0.75` and `hardLimit: 0.95` together to give the pruner a
+  recovery buffer before hard-stopping. This pattern eliminates most
+  `BudgetExceededError`s in practice.
+</Callout>
+
+---
+
+## Budget API
+
+```ts title="budget.ts"
+const session = await orchestrator.createSession({
+  id: "user-abc",
+  budget: 8192,
+  softLimit: 0.75, // trigger pruning at 75%
+  hardLimit: 0.95, // throw at 95%
+});
+
+// Read current budget state
+const { used, limit, remaining, utilization } = session.metrics.budget;
+console.log(`${used}/${limit} tokens (${(utilization * 100).toFixed(1)}%)`);
+
+// Listen for budget events
+session.on("budget:soft", (e) => {
+  console.warn(
+    `Pruning triggered at ${(e.utilization * 100).toFixed(0)}% utilization`,
+  );
+});
+
+session.on("budget:hard", (e) => {
+  console.error(
+    "Hard budget limit reached — increase budget or reduce context",
+  );
+});
+
+// Override budget mid-session
+await session.setBudget({ limit: 16384, softLimit: 0.8 });
+```
+
+---
+
+## Cost estimation
+
+Use the `estimate()` helper to preview token usage before sending:
+
+```ts title="estimate.ts"
+const estimate = await session.estimate("Explain the entire codebase to me.");
+console.log(`This message would use ~${estimate.tokens} tokens`);
+console.log(`Remaining after: ${estimate.remaining}`);
+console.log(`Would trigger pruning: ${estimate.willPrune}`);
+```
+
+---
+
+## Per-message budgets
+
+For single expensive requests, you can override the session budget inline:
+
+```ts title="per-message.ts"
+const response = await session.ask(longPrompt, {
+  budgetOverride: 12000, // one-time override for this message
+});
+```
+
+<Callout type="warning">
+  Per-message budget overrides don't affect the session's cumulative token
+  tracking. Use them sparingly for known large inputs.
+</Callout>
+
+---
+
+<PageNav
+  prev={{ label: "Session Management", href: "/docs/session-management" }}
+  next={{ label: "Semantic Pruning", href: "/docs/semantic-pruning" }}
+/>
