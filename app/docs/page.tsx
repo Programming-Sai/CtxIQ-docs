@@ -1,9 +1,5 @@
 import Link from "next/link";
-import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
-import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded";
-import AutoStoriesRoundedIcon from "@mui/icons-material/AutoStoriesRounded";
-import BoltRoundedIcon from "@mui/icons-material/BoltRounded";
-import DatasetRoundedIcon from "@mui/icons-material/DatasetRounded";
+import { ArrowRight, FileText, BookOpen, Zap, Database } from "lucide-react";
 import { getAllDocs } from "@/lib/docs";
 
 export default function DocsPage() {
@@ -17,7 +13,7 @@ export default function DocsPage() {
         <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.7fr)] lg:items-end">
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-1 text-xs uppercase tracking-[0.16em] text-white/70">
-              <ArticleRoundedIcon style={{ fontSize: 16 }} />
+              <FileText style={{ fontSize: 16 }} />
               <span>Documentation</span>
             </div>
             <div className="space-y-4">
@@ -31,15 +27,15 @@ export default function DocsPage() {
             </div>
             <div className="flex flex-wrap gap-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75">
-                <BoltRoundedIcon style={{ fontSize: 18 }} />
+                <Zap style={{ fontSize: 18 }} />
                 <span>Fast to scan</span>
               </div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75">
-                <AutoStoriesRoundedIcon style={{ fontSize: 18 }} />
+                <BookOpen style={{ fontSize: 18 }} />
                 <span>MDX-backed content</span>
               </div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75">
-                <DatasetRoundedIcon style={{ fontSize: 18 }} />
+                <Database style={{ fontSize: 18 }} />
                 <span>SSG-ready routes</span>
               </div>
             </div>
@@ -64,7 +60,7 @@ export default function DocsPage() {
                       {doc.title}
                     </div>
                   </div>
-                  <ArrowForwardRoundedIcon
+                  <ArrowRight
                     style={{ fontSize: 18 }}
                     className="mt-1 text-white/40 transition group-hover:text-white"
                   />
@@ -106,7 +102,7 @@ export default function DocsPage() {
                 </p>
                 <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#b8c4ff]">
                   <span>Open guide</span>
-                  <ArrowForwardRoundedIcon style={{ fontSize: 18 }} />
+                  <ArrowRight style={{ fontSize: 18 }} />
                 </div>
               </Link>
             ))}
@@ -130,7 +126,7 @@ export default function DocsPage() {
                 </p>
                 <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white/75 transition group-hover:text-white">
                   <span>Open guide</span>
-                  <ArrowForwardRoundedIcon style={{ fontSize: 18 }} />
+                  <ArrowRight style={{ fontSize: 18 }} />
                 </div>
               </Link>
             ))}
@@ -160,7 +156,7 @@ export default function DocsPage() {
                   className="flex items-center justify-between gap-4 rounded-xl border border-transparent px-3 py-3 text-sm text-white/70 transition hover:border-white/10 hover:bg-white/5 hover:text-white"
                 >
                   <span>{doc.title}</span>
-                  <ArrowForwardRoundedIcon style={{ fontSize: 16 }} />
+                  <ArrowRight style={{ fontSize: 16 }} />
                 </Link>
               ))}
             </div>
